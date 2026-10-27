@@ -7,7 +7,7 @@ Tres visualizaciones, una por técnica asignada:
 | Técnica | Datos | Página |
 |---|---|---|
 | Small multiples | Our World in Data — electricidad renovable, UE‑27, 2000–2024 | `small-multiples.html` |
-| Box plot | UCI — Bike Sharing Dataset (Washington D.C., 2011–2012) | `box-plot.html` |
+| Box plot | UCI — Bike Sharing Dataset (Washington D.C., diciembre de 2011 a noviembre de 2012) | `box-plot.html` |
 | Hyperbolic tree | UN Data — CIIU Rev. 4 en español | `hyperbolic-tree.html` |
 
 ## Estructura

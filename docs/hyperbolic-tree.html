@@ -229,6 +229,11 @@ ul.task-list li input[type="checkbox"] {
       });
       new MutationObserver(ocultarTallosRaiz).observe(contenedor, { childList: true, subtree: true });
 
+      // La librería usa la rueda del ratón para hacer zoom y eso impide
+      // desplazar la página con el cursor encima del árbol. Se corta el evento
+      // antes de que llegue al árbol para que la rueda vuelva a mover la página.
+      contenedor.addEventListener('wheel', e => e.stopPropagation(), { capture: true, passive: true });
+
       document.getElementById('inicio').addEventListener('click', () => arbol.api.gotoHome());
       window.arbolCIIU = arbol;
     });
@@ -236,10 +241,10 @@ ul.task-list li input[type="checkbox"] {
 </script>
 <div class="ficha">
 <div>
-<span>Qué se representa</span>La jerarquía completa de la CIIU Rev.&nbsp;4: cada nodo es una categoría y cada rama une una categoría con sus subcategorías (sección → división → grupo → clase).
+<span>Qué se representa</span>La jerarquía completa de la CIIU Rev.&nbsp;4: cada nodo es una categoría y cada rama la une con sus subcategorías (sección → división → grupo → clase). Son 767 nodos, demasiados para un árbol convencional; la geometría hiperbólica amplía el centro (foco) y comprime el resto hacia el borde sin ocultarlo (contexto).
 </div>
 <div>
-<span>Por qué un árbol hiperbólico</span>767 nodos no caben legibles en un árbol convencional. La geometría hiperbólica amplía la zona central (foco) y comprime el resto hacia el borde sin ocultarlo (contexto).
+<span>Qué muestra</span>La clasificación es muy desigual. Industrias manufactureras (sección C) reúne 24 de las 88 divisiones y 137 de las 419 clases, un tercio del total, mientras que secciones como Enseñanza, Actividades inmobiliarias u Organizaciones extraterritoriales tienen solo una división. Al navegar se ve cómo la industria se ramifica mucho más que los servicios.
 </div>
 <div>
 <span>Fuente</span>División de Estadística de las Naciones Unidas (UN Data), <a href="https://unstats.un.org/unsd/classifications/Econ">estructura de la CIIU Rev.&nbsp;4 en español</a>. Visualización con D3 y <a href="https://github.com/glouwa/d3-hypertree">d3-hypertree</a> (licencia MIT).
