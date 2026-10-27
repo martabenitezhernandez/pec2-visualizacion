@@ -1,0 +1,107 @@
+---
+title: "Todas las actividades económicas del mundo en un solo círculo"
+subtitle: "Clasificación Industrial Internacional Uniforme (CIIU Rev. 4) de la ONU: 21 secciones, 88 divisiones, 238 grupos y 419 clases"
+---
+
+```{=html}
+<link rel="stylesheet" href="libs/d3-hypertree/d3-hypertree-light.min.css">
+
+<div class="ht-wrap">
+  <div id="arbol" aria-label="Árbol hiperbólico de la clasificación CIIU Rev. 4"></div>
+  <aside class="panel-arbol">
+    <h4>Nodo en el centro</h4>
+    <ul class="ruta" id="ruta"><li class="actual"><small>Raíz</small><b>CIIU Rev. 4</b></li></ul>
+    <h4>Bajo el ratón</h4>
+    <ul class="ruta"><li id="senalado"><small>—</small><b>Pasa el ratón por el árbol</b></li></ul>
+    <h4>Cómo usarlo</h4>
+    <p>Haz clic en cualquier rama para llevarla al centro y ampliarla. Arrastra para desplazarte. Al pasar el ratón se resalta el camino desde la raíz (el nodo grande y oscuro) hasta la categoría señalada.</p>
+    <button id="inicio" type="button">Volver a la raíz</button>
+  </aside>
+</div>
+
+<script src="libs/d3-hypertree/d3-hypertree.min.js"></script>
+<script>
+(function () {
+  const corto = (s, k) => s.length > k ? s.slice(0, k - 1) + '…' : s;
+  const ruta = document.getElementById('ruta');
+
+  function pintarRuta(n) {
+    const nodos = n.ancestors().reverse();
+    ruta.innerHTML = nodos.map((a, i) => {
+      const d = a.data;
+      const etiqueta = d.code === 'ROOT' ? 'Raíz' : d.level + ' ' + d.code;
+      return '<li' + (i === nodos.length - 1 ? ' class="actual"' : '') + '><small>' +
+             etiqueta + '</small><b>' + d.name + '</b></li>';
+    }).join('');
+  }
+
+  const senalado = document.getElementById('senalado');
+  function pintarSenalado(n) {
+    if (!n || !n.data) return;
+    const d = n.data;
+    senalado.innerHTML = d.code === 'ROOT'
+      ? '<small>Raíz</small><b>CIIU Rev. 4</b>'
+      : '<small>' + d.level + ' ' + d.code + '</small><b>' + d.name + '</b>';
+  }
+
+  fetch('datos/ciiu_rev4.json')
+    .then(r => r.json())
+    .then(datos => {
+      const arbol = new hyt.Hypertree(
+        { parent: document.getElementById('arbol') },
+        {
+          dataloader: hyt.loaders.fromData(datos),
+          langInitBFS: (ht, n) => {
+            n.precalc.label = n.data.code === 'ROOT'
+              ? 'CIIU Rev. 4'
+              : n.data.code + ' · ' + corto(n.data.name, 30);
+          },
+          geometry: {
+            layerOptions: {
+              'stem-arc':  { invisible: true },
+              'stem-link': { invisible: true },
+              'stem-path': { invisible: true },
+              'symbols':   { invisible: true },
+              'link-arcs': { stroke: n => '#c3c2b7' },
+              'nodes':     { fill: n => n.data.code === 'ROOT' ? '#0d366b' : '#2a78d6' }
+            },
+            nodeRadius: (ud, n) => ({ 'Raíz': .045, 'Sección': .022, 'División': .016,
+                                      'Grupo': .012, 'Clase': .009 })[n.data.level]
+          },
+          interaction: {
+            onNodeClick: (n, m, l) => {
+              arbol.api.goto({ re: -n.layout.z.re, im: -n.layout.z.im }, null)
+                .then(() => l.view.hypertree.drawDetailFrame());
+            },
+            onCenterNodeChange: n => pintarRuta(n)
+          }
+        }
+      );
+      // La librería resalta el camino del nodo bajo el ratón con setPathHead;
+      // se intercepta para mostrar también su nombre completo en el panel.
+      const setPathHeadOriginal = arbol.api.setPathHead;
+      arbol.api.setPathHead = (camino, n) => {
+        setPathHeadOriginal(camino, n);
+        if (n) pintarSenalado(n);
+      };
+      // Durante el arrastre y las animaciones, d3-hypertree vuelve a dibujar
+      // la estrella de la raíz y un "tallo" hacia un padre inexistente,
+      // aunque esas capas estén desactivadas. Se ocultan en cuanto aparecen.
+      const contenedor = document.getElementById('arbol');
+      const ocultarTallosRaiz = () => contenedor.querySelectorAll('path').forEach(e => {
+        if (e.__data__ && e.__data__.data && e.__data__.data.code === 'ROOT') e.style.display = 'none';
+      });
+      new MutationObserver(ocultarTallosRaiz).observe(contenedor, { childList: true, subtree: true });
+
+      document.getElementById('inicio').addEventListener('click', () => arbol.api.gotoHome());
+      window.arbolCIIU = arbol;
+    });
+})();
+</script>
+```
+
+::: {.ficha}
+<div><span>Qué se representa</span>La jerarquía completa de la CIIU Rev. 4: cada nodo es una categoría y cada rama une una categoría con sus subcategorías (sección → división → grupo → clase).</div>
+<div><span>Por qué un árbol hiperbólico</span>767 nodos no caben legibles en un árbol convencional. La geometría hiperbólica amplía la zona central (foco) y comprime el resto hacia el borde sin ocultarlo (contexto).</div>
+<div><span>Fuente</span>División de Estadística de las Naciones Unidas (UN Data), [estructura de la CIIU Rev. 4 en español](https://unstats.un.org/unsd/classifications/Econ). Visualización con D3 y [d3-hypertree](https://github.com/glouwa/d3-hypertree) (licencia MIT).</div>
+:::
